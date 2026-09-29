@@ -1,0 +1,67 @@
+{
+  "title": "Temperature Control System",
+  "uid": "tempctl-main",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Current Temp (°C)",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+      "targets": [{ "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+        "rawSql": "SELECT temperature FROM readings ORDER BY ts DESC LIMIT 1" }],
+      "fieldConfig": { "defaults": { "unit": "celsius", "decimals": 1 }, "overrides": [] }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Setpoint (°C)",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+      "targets": [{ "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+        "rawSql": "SELECT setpoint FROM readings ORDER BY ts DESC LIMIT 1" }],
+      "fieldConfig": { "defaults": { "unit": "celsius", "decimals": 1 }, "overrides": [] }
+    },
+    {
+      "id": 3, "type": "stat", "title": "Actuator Mode",
+      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+      "targets": [{ "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+        "rawSql": "SELECT mode FROM readings ORDER BY ts DESC LIMIT 1" }],
+      "options": { "textMode": "value", "colorMode": "background" },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": {
+        "HEAT": { "color": "red", "text": "HEATING" },
+        "COOL": { "color": "blue", "text": "COOLING" },
+        "OFF": { "color": "green", "text": "OFF" } } }] }, "overrides": [] }
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Temperature vs Setpoint",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 5 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+      "targets": [{ "refId": "A", "format": "time_series", "rawQuery": true, "editorMode": "code",
+        "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+        "rawSql": "SELECT ts AS time, temperature, setpoint, ambient FROM readings WHERE $__timeFilter(ts) ORDER BY ts" }],
+      "fieldConfig": { "defaults": { "unit": "celsius" }, "overrides": [] }
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Actuator (1=Heat, -1=Cool, 0=Off)",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+      "targets": [{ "refId": "A", "format": "time_series", "rawQuery": true, "editorMode": "code",
+        "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+        "rawSql": "SELECT ts AS time, CASE mode WHEN 'HEAT' THEN 1 WHEN 'COOL' THEN -1 ELSE 0 END AS actuator FROM readings WHERE $__timeFilter(ts) ORDER BY ts" }],
+      "fieldConfig": { "defaults": { "custom": { "lineInterpolation": "stepAfter", "fillOpacity": 20 } }, "overrides": [] }
+    },
+    {
+      "id": 6, "type": "table", "title": "Control Events",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 15 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+      "targets": [{ "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "datasource": { "type": "grafana-postgresql-datasource", "uid": "pg-tempctl" },
+        "rawSql": "SELECT ts, action, reason FROM control_events ORDER BY ts DESC LIMIT 50" }]
+    }
+  ]
+}
